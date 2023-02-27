@@ -1,134 +1,265 @@
-# Phase 3 Project Guidelines
+# Books & Reviews
 
-## Learning Goals
+## Explanation
 
-- Build a web basic API with Sinatra and Active Record to support a React
-  frontend
+### This project exposes REST api for books and reviews CRUD operations.
 
-## Introduction
+#### Books can be created and read
 
-Congrats on getting through all the material for Phase 3! Now's the time to put
-it all together and build something from scratch to reinforce what you know and
-expand your horizons.
-
-The focus of this project is **building a Sinatra API backend** that uses
-**Active Record** to access and persist data in a database, which will be used
-by a separate **React frontend** that interacts with the database via the API.
-
+#### Reviews can be created, deleted, edited and read
+## Frontend is available at:
+- https://github.com/Asmasa1588/phase-3-sinatra-react-project-client
 ## Requirements
 
-For this project, you must:
+- `ruby` v2.6.1
+- `sqlite3` v3.31.1
+- `sinatra` v2.1
+- `sinatra active record` v 2.0
+- `thin` v1.8
 
-- Use Active Record to interact with a database.
-- Have at least two models with a one-to-many relationship.
-- At a minimum, set up the following API routes in Sinatra:
-  - create and read actions for both models
-  - full CRUD capability for one of the models
-- Build a separate React frontend application that interacts with the API to
-  perform CRUD actions.
-- Implement proper front end state management. You should be updating state using a
-  setState function after receiving your response from a POST, PATCH, or DELETE 
-  request. You should NOT be relying on a GET request to update state. 
-- Use good OO design patterns. You should have separate classes for each of your
-  models, and create instance and class methods as necessary. 
-- Routes in your application (both client side and back end) should follow RESTful
-  conventions.
-- Use your back end optimally. Pass JSON for related associations to the front 
-  end from the back end. You should use active record methods in your controller to grab
-  the needed data from your database and provide as JSON to the front end. You
-  should NOT be relying on filtering front end state or a separate fetch request to
-  retrieve related data.
+## Installation
 
-For example, build a todo list application with a React frontend interface and a
-Sinatra backend API, where a user can:
+1. cd into the project and run:
+   - `$ bundle install`
+2. To create migrations run:
+   - `$ rake db:migrate`
+3. To seed the database run:
+   - `$ rake db:seed`
+4. The server will run on http://localhost:9292/. To start the server run:
+   - `$ rake server`
 
-- **Create** a new todo
-- **Read** a list of all todos
-- **Update** an individual todo
-- **Delete** a todo
+## Overview 
 
-A `Todo` can be tagged with a `Category`, so that each todo _belongs to_ a
-category and each category _has many_ todos.
+For my Phase-3 Ruby project, I have created an app where we can review books. We can also add, edit, or delete a review. We can also create and read and books description.
+![books](books.png)
 
-## Getting Started
+To begin it we need to do the steps described below.
 
-### Backend Setup
+Lets create a controller folder and in it create a new file- `application_controller.rb`
 
-This repository has all the starter code needed to get a Sinatra backend up and
-running. [**Fork and clone**][fork link] this repository to get started. Then, run
-`bundle install` to install the gems.
+```Ruby
+class ApplicationController < Sinatra::Base
+  set :default_content_type, 'application/json'
+  
+  # Add your routes here
+  get "/" do
+    { message: "Good luck with your project!" }.to_json
+  end
 
-**Important**: Be sure you fork a copy of the repo into your GitHub account
-before cloning it. You can do this by using the link above or by clicking the
-"Octocat" button at the top of this page, then clicking "Fork" in the upper
-right corner of the repo page.
-
-[fork link]: https://github.com/learn-co-curriculum/phase-3-sinatra-react-project/fork
-
-The `app/controllers/application_controller.rb` file has an example GET route
-handler. Replace this route with routes for your project.
-
-You can start your server with:
-
-```console
-$ bundle exec rake server
+end
 ```
 
-This will run your server on port
-[http://localhost:9292](http://localhost:9292).
+Once we create our first file lets also create these two
+`books_controller.rb`
+```Ruby
+class BooksController < ApplicationController
+    get '/books' do
+        Book.all.to_json
+    end
 
-### Frontend Setup
+    get '/books/:id' do
+        book = Book.find(params[:id])
+        bookDTO = BookDTO.new
+        bookDTO.title = book.title
+        bookDTO.author = book.author 
+        bookDTO.year = book.year
+        bookDTO.pages = book.pages
+        reviews = Review.where(book_id: params[:id])
+        bookDTO.reviews = reviews
+        bookDTO.to_json
+    end
 
-Your backend and your frontend should be in **two different repositories**.
-
-Create a new repository in a **separate folder** with a React app for your
-frontend. To do this, `cd` out of the backend project directory, and use
-[create-react-app][] to generate the necessary code for your React frontend:
-
-```console
-$ npx create-react-app my-app-frontend
+    post '/books' do
+        #binding.pry
+        book = Book.create(
+        title: params[:title],
+        author: params[:author],
+        year: params[:year],
+        pages: params[:pages]
+        )
+        book.to_json
+    end
+end
 ```
 
-After creating the project locally, you should also
-[create a repository on GitHub][create repo] to host your repo and help
-collaborate, if you're working with a partner.
+And `reviews_controller.rb`
+```Ruby
+class ReviewsController < ApplicationController
+    get '/reviews' do
+        Review.all.to_json
+    end
 
-### Fetch Example
+    get '/reviews/:id' do
+        review = Review.find(params[:id])
+        review.to_json
+    end
 
-Your React app should make fetch requests to your Sinatra backend! Here's an
-example:
+    post '/reviews/:bookId' do
+        #binding.pry
+        review = Review.create(
+        review: params[:review],
+        book_id: params[:bookId]
+        )
+        review.to_json
+    end
 
-```js
-fetch("http://localhost:9292/test")
-  .then((r) => r.json())
-  .then((data) => console.log(data));
+    patch '/reviews/:id' do
+        review = Review.find(params[:id])      
+        review.update(
+            review: params[:review]
+            )
+        review.to_json
+    end
+
+    delete '/reviews/:id' do
+        review = Review.find(params[:id])
+        review.destroy
+        review.to_json
+    end
+end
+```
+You will notice that each new controller is extending the application controller `class BooksController < ApplicationController`
+
+And the application controller is extending the Sinatra controller `class ApplicationController < Sinatra::Base`
+As you can see books_controller.rb is using a DTO (Data Transfer Object) this is needed because we have a route which is going to return books entity with additional information. You can create that DTO file by creating a DTO folder and creating the following file in it.  
+`books_dto.rb`
+```Ruby
+class BookDTO 
+    def title=(titleArg)
+        @title = titleArg
+    end
+    def title
+        @title
+    end
+
+    def author=(authorArg)
+        @author = authorArg
+    end
+    def author
+        @author
+    end
+
+    def year=(yearArg)
+        @year = yearArg
+    end
+    def year
+        @year
+    end
+
+    def pages=(pagesArg)
+        @pages = pagesArg
+    end
+    def pages
+        @pages
+    end
+
+    def reviews=(reviewsArg)
+        @reviews = reviewsArg
+    end
+    def reviews
+        @reviews
+    end
+end
 ```
 
-## Project Tips
 
-- This project is intended to focus more on the backend than the frontend, so
-  try and keep the React side of things relatively simple. Focus on working with
-  Active Record and performing CRUD actions. What are some interesting queries you can write? What kinds of questions can you ask of your data?
-- Once you have a project idea, come up with a domain model and decide what
-  relationships exist between the models in your application. Use a tool like
-  [dbdiagram.io][] to help visualize your models.
-- Decide on your API endpoints. What data should they return? What kind of CRUD
-  action should they perform? What data do they need from the client?
-- Use [Postman][postman download] to test your endpoints.
-- Use `binding.pry` to debug your requests on the server. It's very helpful to use a
-  `binding.pry` in your controller within a route to see what `params` are being
-  sent.
-- Use the [Network Tab in the Dev Tools][network tab] in the frontend to debug
-  your requests.
+DTO files are perfect when we want to send objects which are different than our models. Speaking of which let’s create a models folder and in it we are going to create files.
 
-## Resources
+Reviews controller contains all of the four CRUD operations. They are consistence of create, read, update, and delete. ‘reviews/‘ GET and ‘reviews/:id' GET are examples of end points for HTTP GET methods. The first end point we return all existing reviews. Where is the second one we will return only the single review that has the provided ID. ‘reviews/:id’  DELETE is an example of a HTTP DELETE method. Its purpose is to delete a particular review based on the provided id.  This end point will return a json object of the deleted review as a response.
+‘reviews/:id’ PATCH is an example of a HTTP method for updating the review. This HTTP request will send data via  HTTP request body. That data will be sent through the request via json. We know which review to update because of the provided ID. 
+‘reviews’ POST is an example of a HTTP POST request that aims to create a bright new review required data is sent through HTTP request body again in the form of json (JavaScript Object Notation).
 
-- [create-react-app][]
-- [dbdiagram.io][]
-- [Postman][postman download]
+ `Book.rb`
+```Ruby
+class Book < ActiveRecord::Base
+    has_many :reviews
+end
+```
+And
+`Review.rb`
+```Ruby
+class Review < ActiveRecord::Base
+    belongs_to :book
+    validates :review, presence: true
 
-[create-react-app]: https://create-react-app.dev/docs/getting-started
-[create repo]: https://docs.github.com/en/get-started/quickstart/create-a-repo
-[dbdiagram.io]: https://dbdiagram.io/
-[postman download]: https://www.postman.com/downloads/
-[network tab]: https://developer.chrome.com/docs/devtools/network/
+end
+```
+Models are such files that contains classes which resemble data entity. In this case Books, and Reviews. Notice that we have established the book class that it have many reviews. That’s making one too many relationships with reviews models. We have also specify to where reviews models belongs to. And last but not least, we have specify that the review model has a required property - review
+
+Let’s create our first Migration.
+```Ruby
+class CreateBooks < ActiveRecord::Migration[6.1]
+  def change
+    create_table :books do |t|
+      t.string :title
+    end
+  end
+end
+```
+It’s job to create a table books which has one property title. Then we will create a second migration.
+```Ruby
+class CreateReviews < ActiveRecord::Migration[6.1]
+  def change
+    create_table :reviews do |t|
+      t.text :review
+    end
+  end
+end
+```
+This migration is responsible for creating a review table that has one column review of type text. 
+
+```Ruby
+class AddBookIdToReviews < ActiveRecord::Migration[6.1]
+  def change
+    add_column :reviews, :book_id, :integer
+  end
+end
+```
+The AddBookIdToReviews migration as its name suggests aims to add a new column to the reviews table. Thus , implementing a many to one relationship with he books table via the book_id column.
+```Ruby
+class AddAuthorToBooks < ActiveRecord::Migration[6.1]
+  def change
+    add_column :books, :author, :string
+    add_column :books, :year, :integer
+    add_column :books, :pages, :integer
+  end
+end
+```
+This migration will add three new columns to the books table. The first column will be an author of type text.
+Interestingly enough a book has other interesting information such as year of published and number of pages. And that why we have two more columns ,year and pages.
+Now you can run the migration by using the following command:
+    * $ rake db:migrate
+The above command will execute all of the four mentioned migrations. When it is done, it will generate a schema.rb file containing this:
+```Ruby
+ActiveRecord::Schema.define(version: 2022_12_15_193213) do
+
+  create_table "books", force: :cascade do |t|
+    t.string "title"
+    t.string "author"
+    t.integer "year"
+    t.integer "pages"
+  end
+
+  create_table "reviews", force: :cascade do |t|
+    t.text "review"
+    t.integer "book_id"
+  end
+
+end
+```
+And this dear readers is the final version of the database. This file auto generated and because of that you should never edit it. Instead what you can do is to create a new migration that changes the database( in case you need to edit it).
+Our final file is the seeds.rb file
+puts "🌱 Seeding spices..."
+
+book = Book.create(title: "Galaxy", author: "Steve jobs", year: 2004, pages: 114)
+review = Review.create(review: "Review on Galaxy", book_id: 2)
+
+puts "✅ Done seeding!"
+
+Its purpose is to populate the database with some initial data. You can start the seeds.rb script by executing the following.
+    * $ rake db:seed
+Congratulations you have created a simple CRUD application and you can start it by executing by this command:
+    * $ rake server
+
+The server will run on http://localhost:9292/. 
+
