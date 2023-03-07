@@ -14,4 +14,5 @@ use Rack::JSONBodyParser
 # Our application
 use ReviewsController
 use BooksController
+use UserController
 run ApplicationController
