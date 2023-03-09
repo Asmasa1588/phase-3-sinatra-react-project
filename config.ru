@@ -15,4 +15,5 @@ use Rack::JSONBodyParser
 use ReviewsController
 use BooksController
 use UsersController
+use AuthorsController
 run ApplicationController
