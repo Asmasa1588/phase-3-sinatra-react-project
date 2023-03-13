@@ -5,14 +5,7 @@ class BooksController < ApplicationController
 
     get '/books/:id' do
         book = Book.find(params[:id])
-        bookDTO = BookDTO.new
-        bookDTO.title = book.title
-        bookDTO.author = book.author 
-        bookDTO.year = book.year
-        bookDTO.pages = book.pages
-        reviews = Review.where(book_id: params[:id])
-        bookDTO.reviews = reviews
-        bookDTO.to_json
+        book.to_json(include: :reviews)
     end
 
     post '/books' do
@@ -23,6 +16,12 @@ class BooksController < ApplicationController
         year: params[:year],
         pages: params[:pages]
         )
+        book.to_json
+    end
+
+    delete '/books/:id' do
+        book = Book.find(params[:id])
+        book.destroy
         book.to_json
     end
 end
