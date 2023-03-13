@@ -59,14 +59,7 @@ class BooksController < ApplicationController
 
     get '/books/:id' do
         book = Book.find(params[:id])
-        bookDTO = BookDTO.new
-        bookDTO.title = book.title
-        bookDTO.author = book.author 
-        bookDTO.year = book.year
-        bookDTO.pages = book.pages
-        reviews = Review.where(book_id: params[:id])
-        bookDTO.reviews = reviews
-        bookDTO.to_json
+        book.to_json(include: :reviews) 
     end
 
     post '/books' do
@@ -121,49 +114,6 @@ end
 You will notice that each new controller is extending the application controller `class BooksController < ApplicationController`
 
 And the application controller is extending the Sinatra controller `class ApplicationController < Sinatra::Base`
-As you can see books_controller.rb is using a DTO (Data Transfer Object) this is needed because we have a route which is going to return books entity with additional information. You can create that DTO file by creating a DTO folder and creating the following file in it.  
-`books_dto.rb`
-```Ruby
-class BookDTO 
-    def title=(titleArg)
-        @title = titleArg
-    end
-    def title
-        @title
-    end
-
-    def author=(authorArg)
-        @author = authorArg
-    end
-    def author
-        @author
-    end
-
-    def year=(yearArg)
-        @year = yearArg
-    end
-    def year
-        @year
-    end
-
-    def pages=(pagesArg)
-        @pages = pagesArg
-    end
-    def pages
-        @pages
-    end
-
-    def reviews=(reviewsArg)
-        @reviews = reviewsArg
-    end
-    def reviews
-        @reviews
-    end
-end
-```
-
-
-DTO files are perfect when we want to send objects which are different than our models. Speaking of which let’s create a models folder and in it we are going to create files.
 
 Reviews controller contains all of the four CRUD operations. They are consistence of create, read, update, and delete. ‘reviews/‘ GET and ‘reviews/:id' GET are examples of end points for HTTP GET methods. The first end point we return all existing reviews. Where is the second one we will return only the single review that has the provided ID. ‘reviews/:id’  DELETE is an example of a HTTP DELETE method. Its purpose is to delete a particular review based on the provided id.  This end point will return a json object of the deleted review as a response.
 ‘reviews/:id’ PATCH is an example of a HTTP method for updating the review. This HTTP request will send data via  HTTP request body. That data will be sent through the request via json. We know which review to update because of the provided ID. 
